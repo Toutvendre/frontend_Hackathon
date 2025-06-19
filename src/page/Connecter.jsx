@@ -5,8 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "../utils/AuthContext";
-import { getDashboardRedirectUrl, debugCategoryInfo } from "@/utils/categorie/categoryRedirection";
-import api from "../utils/axiosConfig";
+import { getDashboardRedirectUrl } from "@/utils/categorie/categoryRedirection";
 
 export default function LoginPage() {
     const [cmpid, setCmpid] = useState("");
@@ -20,17 +19,19 @@ export default function LoginPage() {
         e.preventDefault();
         if (loading || redirecting) return;
 
-        // Reset des erreurs
         setErrors({});
         clearError();
 
-        // Validation côté client
         const newErrors = {};
         if (!cmpid.trim()) {
             newErrors.cmpid = "Le CMPID est requis";
+        } else if (cmpid.trim().length < 3) {
+            newErrors.cmpid = "Le CMPID doit contenir au moins 3 caractères";
         }
         if (!motDePasse.trim()) {
             newErrors.motDePasse = "Le mot de passe est requis";
+        } else if (motDePasse.length < 6) {
+            newErrors.motDePasse = "Le mot de passe doit contenir au moins 6 caractères";
         }
 
         if (Object.keys(newErrors).length > 0) {
@@ -39,43 +40,31 @@ export default function LoginPage() {
         }
 
         try {
-            console.log('Tentative de connexion...');
             const response = await login(cmpid.trim(), motDePasse);
-
-            // 🔁 Nouvelle structure de la réponse : response.compagnie et response.token
             if (response && response.compagnie) {
                 const compagnie = response.compagnie;
-                console.log('Connexion réussie, données compagnie:', compagnie);
-
-                // Activer l'état de redirection
                 setRedirecting(true);
-
-                // Debug (optionnel en dev local)
-                if (api.defaults.baseURL.includes('localhost')) {
-                    await debugCategoryInfo(compagnie);
-                }
-
-                // Déterminer l'URL de redirection dynamiquement
-                console.log('Détermination de l\'URL de redirection...');
                 const redirectUrl = await getDashboardRedirectUrl(compagnie);
-                console.log(`Redirection vers: ${redirectUrl}`);
-
-                // Petite pause pour une meilleure UX
                 setTimeout(() => {
                     navigate(redirectUrl);
                 }, 500);
             } else {
-                console.error('Réponse de connexion invalide:', response);
                 setErrors({ general: 'Erreur de connexion inattendue' });
             }
-
-        } catch (error) {
-            console.error('Erreur de connexion:', error);
+        } catch (err) {
             setRedirecting(false);
-            // L'erreur est déjà gérée dans le contexte AuthProvider
+            if (err.response?.status === 422) {
+                const serverErrors = err.response.data.errors || {};
+                setErrors({
+                    cmpid: serverErrors.cmpid?.[0] || '',
+                    motDePasse: serverErrors.motDePasse?.[0] || '',
+                    general: serverErrors.message || 'Les données fournies sont invalides',
+                });
+            } else {
+                setErrors({ general: err.response?.data?.message || 'Erreur de connexion' });
+            }
         }
     };
-
 
     const handleChange = (field, value) => {
         if (field === 'cmpid') {
@@ -84,18 +73,15 @@ export default function LoginPage() {
             setMotDePasse(value);
         }
 
-        // Supprimer l'erreur pour ce champ s'il existe
         if (errors[field]) {
             setErrors(prev => ({ ...prev, [field]: '' }));
         }
     };
 
-    // État de chargement combiné
     const isLoading = loading || redirecting;
 
     return (
         <div className="min-h-screen bg-white">
-            {/* Header */}
             <header className="flex items-center justify-between p-4 sm:p-6 border-b border-gray-200">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500 text-white">
@@ -115,10 +101,8 @@ export default function LoginPage() {
                 </button>
             </header>
 
-            {/* Main Content */}
             <main className="flex flex-1 items-center justify-center p-4 sm:p-6">
                 <div className="w-full max-w-md space-y-6">
-                    {/* Page Title */}
                     <div className="text-center space-y-2">
                         <h2 className="text-2xl sm:text-3xl font-bold text-black">
                             Connexion
@@ -128,7 +112,6 @@ export default function LoginPage() {
                         </p>
                     </div>
 
-                    {/* Error Message */}
                     {error && (
                         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                             <div className="flex items-start gap-3">
@@ -141,7 +124,6 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    {/* General Error Message */}
                     {errors.general && (
                         <div className="bg-red-50 border border-red-200 rounded-lg p-4">
                             <div className="flex items-start gap-3">
@@ -154,7 +136,6 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    {/* Redirection Message */}
                     {redirecting && (
                         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
                             <div className="flex items-start gap-3">
@@ -167,9 +148,7 @@ export default function LoginPage() {
                         </div>
                     )}
 
-                    {/* Login Form */}
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        {/* CMPID Field */}
                         <div className="space-y-2">
                             <Label htmlFor="cmpid" className="text-sm font-medium text-black">
                                 CMPID <span className="text-red-500">*</span>
@@ -192,7 +171,6 @@ export default function LoginPage() {
                             )}
                         </div>
 
-                        {/* Password Field */}
                         <div className="space-y-2">
                             <Label htmlFor="motDePasse" className="text-sm font-medium text-black">
                                 Mot de passe <span className="text-red-500">*</span>
@@ -215,7 +193,6 @@ export default function LoginPage() {
                             )}
                         </div>
 
-                        {/* Submit Button */}
                         <Button
                             type="submit"
                             className="w-full h-11 bg-orange-500 hover:bg-orange-600 text-white font-medium"
@@ -237,7 +214,6 @@ export default function LoginPage() {
                         </Button>
                     </form>
 
-                    {/* Footer Links */}
                     <div className="space-y-4 pt-4 border-t border-gray-200">
                         <div className="text-center">
                             <p className="text-sm text-gray-600">

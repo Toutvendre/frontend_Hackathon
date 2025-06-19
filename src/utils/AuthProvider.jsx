@@ -23,15 +23,16 @@ export const AuthProvider = ({ children }) => {
 
             try {
                 setError(null);
-                const response = await api.get('/type-categories');
-                // Supposons que l'API pourrait être modifiée pour inclure la compagnie
-                setCompagnie(response.data.compagnie || {});
+                // IMPORTANT : modifie ici pour appeler l'endpoint qui retourne la compagnie connectée
+                const response = await api.get('/utilisateur-connecte');
+                setCompagnie(response.data);
             } catch (error) {
                 console.error('Erreur lors de la vérification du token:', error);
                 if (error.response?.status === 401 || error.response?.status === 403) {
                     setCompagnie(null);
                     setToken(null);
                     setError('Session expirée. Veuillez vous reconnecter.');
+                    localStorage.removeItem('auth_token');
                 } else {
                     setError('Erreur lors du chargement des données.');
                 }
@@ -43,12 +44,12 @@ export const AuthProvider = ({ children }) => {
     }, [token]);
 
     // Fonction de connexion
-    const login = async (cmpid, motDePasse) => {
+    const login = async (CMPID, motDePasse) => {
         try {
             setLoading(true);
             setError(null);
             const response = await api.post('/login', {
-                CMPID: cmpid,
+                CMPID,
                 mot_de_passe: motDePasse,
             });
             const { token, compagnie } = response.data;
@@ -73,7 +74,6 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             if (token) {
-                // Appeler une route de déconnexion si disponible
                 await api.post('/logout').catch(() => { });
             }
         } catch (error) {
@@ -138,8 +138,8 @@ export const AuthProvider = ({ children }) => {
         if (!token) return;
         try {
             setError(null);
-            const response = await api.get('/type-categories');
-            setCompagnie(response.data.compagnie || {});
+            const response = await api.get('/utilisateur-connecte');
+            setCompagnie(response.data);
             return response.data;
         } catch (error) {
             console.error('Erreur lors du rafraîchissement:', error);
@@ -155,7 +155,7 @@ export const AuthProvider = ({ children }) => {
         return !!(token && compagnie);
     };
 
-    // Vérifier les rôles (non utilisé pour l'instant, mais inclus pour compatibilité)
+    // Vérifier les rôles (pas utilisé pour l'instant)
     const hasRole = (role) => {
         return compagnie?.roles?.includes(role) || false;
     };
@@ -176,27 +176,26 @@ export const AuthProvider = ({ children }) => {
         setError(null);
     };
 
-    // Contexte
-    const contextValue = {
-        compagnie,
-        token,
-        loading,
-        error,
-        login,
-        logout,
-        register,
-        updateProfile,
-        refreshCompany,
-        isAuthenticated,
-        hasRole,
-        hasAnyRole,
-        clearError,
-        setLoading,
-        setCompagnie,
-    };
-
     return (
-        <AuthContext.Provider value={contextValue}>
+        <AuthContext.Provider
+            value={{
+                compagnie,
+                token,
+                loading,
+                error,
+                login,
+                logout,
+                register,
+                updateProfile,
+                refreshCompany,
+                isAuthenticated,
+                hasRole,
+                hasAnyRole,
+                clearError,
+                setLoading,
+                setCompagnie,
+            }}
+        >
             {children}
         </AuthContext.Provider>
     );

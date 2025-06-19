@@ -2,14 +2,14 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8000/api', // Remplacez par l'URL de votre backend Laravel
+    baseURL: 'http://localhost:8000/api', // URL de ton backend Laravel
     headers: {
-        'Content-Type': 'application/json',
         'Accept': 'application/json',
+        // 'Content-Type' sera automatiquement défini par axios selon le type de requête (ex: FormData)
     },
 });
 
-// Intercepteur pour ajouter le token aux requêtes
+// Intercepteur pour ajouter le token d'authentification Bearer dans l'en-tête
 api.interceptors.request.use(
     (config) => {
         const token = localStorage.getItem('auth_token');
