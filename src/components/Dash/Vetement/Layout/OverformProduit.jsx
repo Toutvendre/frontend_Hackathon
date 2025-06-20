@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useContext, useEffect } from 'react';
-import { X, Upload, Loader2, AlertCircle, Shirt } from 'lucide-react';
+import { X, Upload, Loader2, AlertCircle, Shirt, ImagePlus, Tag, DollarSign, Package } from 'lucide-react';
 import { AuthContext } from '@/utils/AuthContext';
 import { toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -51,7 +51,6 @@ const OverformProduit = ({ ouvert, onFermer }) => {
         if (formData.vetement_categorie_id) {
             const fetchSousCategories = async () => {
                 try {
-                    // Adaptation de l'URL avec le bon chemin complet
                     const res = await api.get(`/categories/vetement/${formData.vetement_categorie_id}/sous-categories`);
                     console.log('Sous-catégories récupérées:', res.data);
                     setSousCategories(res.data);
@@ -188,16 +187,23 @@ const OverformProduit = ({ ouvert, onFermer }) => {
 
     if (!isAuthenticated() || !compagnie?.id) {
         return (
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
-                <div className="bg-white p-6 rounded">
-                    <h2 className="text-lg font-semibold">Erreur</h2>
-                    <p className="mt-2">Vous devez être connecté pour ajouter un produit.</p>
-                    <button
-                        onClick={onFermer}
-                        className="mt-4 px-4 py-2 rounded bg-black text-white"
-                    >
-                        Fermer
-                    </button>
+            <div className="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center">
+                <div className="bg-white p-8 rounded-lg shadow-sm max-w-md mx-4 border border-gray-100">
+                    <div className="text-center">
+                        <div className="w-12 h-12 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <AlertCircle className="w-6 h-6 text-red-500" />
+                        </div>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">Accès restreint</h3>
+                        <p className="text-gray-600 text-sm mb-6">
+                            Vous devez être connecté pour ajouter un produit.
+                        </p>
+                        <button
+                            onClick={onFermer}
+                            className="w-full px-4 py-2 bg-gray-900 text-white text-sm font-medium rounded-md hover:bg-gray-800 transition-colors"
+                        >
+                            Fermer
+                        </button>
+                    </div>
                 </div>
             </div>
         );
@@ -205,171 +211,213 @@ const OverformProduit = ({ ouvert, onFermer }) => {
 
     return (
         <>
-            <div className="fixed inset-0 bg-black bg-opacity-50 z-40" onClick={(e) => e.target === e.currentTarget && onFermer()} />
+            <div className="fixed inset-0 bg-black bg-opacity-40 z-40" onClick={(e) => e.target === e.currentTarget && onFermer()} />
             <div
-                className={`fixed top-0 right-0 h-full w-full sm:w-[500px] bg-white z-50 shadow-lg transform transition-transform duration-300 ease-in-out ${ouvert ? 'translate-x-0' : 'translate-x-full'}`}
+                className={`fixed top-0 right-0 h-full w-full sm:w-[520px] bg-white z-50 shadow-sm transform transition-transform duration-300 ${ouvert ? 'translate-x-0' : 'translate-x-full'}`}
             >
-                <div className="flex items-center justify-between px-6 py-4 border-b">
-                    <div className="flex items-center gap-2">
-                        <div className="bg-black text-white p-2 rounded-lg">
-                            <Shirt className="w-5 h-5" />
+                {/* Header */}
+                <div className="border-b border-gray-100 px-6 py-4">
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-gray-100 rounded-md flex items-center justify-center">
+                                <Shirt className="w-4 h-4 text-orange-600" />
+                            </div>
+                            <h2 className="text-lg font-medium text-gray-900">Nouveau produit</h2>
                         </div>
-                        <h2 className="text-lg font-semibold">Ajouter un produit</h2>
+                        <button
+                            onClick={onFermer}
+                            className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50 rounded-md transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
                     </div>
-                    <button onClick={onFermer} className="text-gray-600 hover:text-black">
-                        <X className="w-5 h-5" />
-                    </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-4 overflow-y-auto h-[calc(100%-80px)]">
-                    <div>
-                        <label className="block text-sm font-medium">Nom *</label>
-                        <input
-                            type="text"
-                            name="nom"
-                            value={formData.nom}
-                            onChange={handleChange}
-                            className="w-full border rounded px-3 py-2 mt-1"
-                            required
-                        />
-                        {errors.nom && (
-                            <p className="text-sm text-red-600 flex items-center gap-1">
-                                <AlertCircle className="w-4 h-4" />
-                                {errors.nom}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium">Description</label>
-                        <textarea
-                            name="description"
-                            value={formData.description}
-                            onChange={handleChange}
-                            className="w-full border rounded px-3 py-2 mt-1"
-                            rows={4}
-                        />
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium">Prix (en FCFA) *</label>
-                        <input
-                            type="number"
-                            name="prix"
-                            value={formData.prix}
-                            onChange={handleChange}
-                            className="w-full border rounded px-3 py-2 mt-1"
-                            required
-                        />
-                        {errors.prix && (
-                            <p className="text-sm text-red-600 flex items-center gap-1">
-                                <AlertCircle className="w-4 h-4" />
-                                {errors.prix}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium">Stock *</label>
-                        <input
-                            type="number"
-                            name="stock"
-                            value={formData.stock}
-                            onChange={handleChange}
-                            className="w-full border rounded px-3 py-2 mt-1"
-                            required
-                        />
-                        {errors.stock && (
-                            <p className="text-sm text-red-600 flex items-center gap-1">
-                                <AlertCircle className="w-4 h-4" />
-                                {errors.stock}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium">Catégorie *</label>
-                        <select
-                            name="vetement_categorie_id"
-                            value={formData.vetement_categorie_id}
-                            onChange={handleChange}
-                            className="w-full border rounded px-3 py-2 mt-1"
-                            required
-                        >
-                            <option value="">Sélectionner une catégorie</option>
-                            {categories.map((cat) => (
-                                <option key={cat.id} value={cat.id}>
-                                    {cat.nom}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.vetement_categorie_id && (
-                            <p className="text-sm text-red-600 flex items-center gap-1">
-                                <AlertCircle className="w-4 h-4" />
-                                {errors.vetement_categorie_id}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium">Sous-catégorie *</label>
-                        <select
-                            name="vetement_sous_categorie_id"
-                            value={formData.vetement_sous_categorie_id}
-                            onChange={handleChange}
-                            className="w-full border rounded px-3 py-2 mt-1"
-                            required
-                        >
-                            <option value="">Sélectionner une sous-catégorie</option>
-                            {sousCategories.map((sousCat) => (
-                                <option key={sousCat.id} value={sousCat.id}>
-                                    {sousCat.nom}
-                                </option>
-                            ))}
-                        </select>
-                        {errors.vetement_sous_categorie_id && (
-                            <p className="text-sm text-red-600 flex items-center gap-1">
-                                <AlertCircle className="w-4 h-4" />
-                                {errors.vetement_sous_categorie_id}
-                            </p>
-                        )}
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium">Image</label>
-                        <input type="file" accept="image/*" onChange={handleFileChange} />
-                        {previewImage && (
-                            <div className="relative mt-2">
-                                <img src={previewImage.preview} alt="Preview" className="w-full h-40 object-cover rounded" />
-                                <button
-                                    onClick={removeImage}
-                                    type="button"
-                                    className="absolute top-2 right-2 bg-red-500 text-white rounded-full p-1"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
+                <form onSubmit={handleSubmit} className="flex flex-col h-[calc(100%-73px)]">
+                    <div className="flex-1 overflow-y-auto px-6 py-6">
+                        <div className="space-y-6">
+                            {/* Nom du produit */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">
+                                    Nom du produit *
+                                </label>
+                                <input
+                                    type="text"
+                                    name="nom"
+                                    value={formData.nom}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300"
+                                    placeholder="Nom du produit"
+                                    required
+                                />
+                                {errors.nom && (
+                                    <p className="mt-1 text-xs text-red-600">{errors.nom}</p>
+                                )}
                             </div>
-                        )}
-                        {errors.image && (
-                            <p className="text-sm text-red-600 flex items-center gap-1">
-                                <AlertCircle className="w-4 h-4" />
-                                {errors.image}
-                            </p>
-                        )}
+
+                            {/* Description */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                                <textarea
+                                    name="description"
+                                    value={formData.description}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300 resize-none"
+                                    rows={3}
+                                    placeholder="Description du produit"
+                                />
+                            </div>
+
+                            {/* Prix et Stock */}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Prix (FCFA) *</label>
+                                    <input
+                                        type="number"
+                                        name="prix"
+                                        value={formData.prix}
+                                        onChange={handleChange}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300"
+                                        placeholder="0"
+                                        required
+                                    />
+                                    {errors.prix && (
+                                        <p className="mt-1 text-xs text-red-600">{errors.prix}</p>
+                                    )}
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">Stock *</label>
+                                    <input
+                                        type="number"
+                                        name="stock"
+                                        value={formData.stock}
+                                        onChange={handleChange}
+                                        className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300"
+                                        placeholder="0"
+                                        required
+                                    />
+                                    {errors.stock && (
+                                        <p className="mt-1 text-xs text-red-600">{errors.stock}</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Catégorie */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Catégorie *</label>
+                                <select
+                                    name="vetement_categorie_id"
+                                    value={formData.vetement_categorie_id}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300 bg-white"
+                                    required
+                                >
+                                    <option value="">Sélectionner</option>
+                                    {categories.map((cat) => (
+                                        <option key={cat.id} value={cat.id}>
+                                            {cat.nom}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.vetement_categorie_id && (
+                                    <p className="mt-1 text-xs text-red-600">{errors.vetement_categorie_id}</p>
+                                )}
+                            </div>
+
+                            {/* Sous-catégorie */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Sous-catégorie *</label>
+                                <select
+                                    name="vetement_sous_categorie_id"
+                                    value={formData.vetement_sous_categorie_id}
+                                    onChange={handleChange}
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-md text-sm focus:outline-none focus:ring-1 focus:ring-gray-300 focus:border-gray-300 bg-white disabled:bg-gray-50"
+                                    disabled={!formData.vetement_categorie_id}
+                                    required
+                                >
+                                    <option value="">Sélectionner</option>
+                                    {sousCategories.map((sousCat) => (
+                                        <option key={sousCat.id} value={sousCat.id}>
+                                            {sousCat.nom}
+                                        </option>
+                                    ))}
+                                </select>
+                                {errors.vetement_sous_categorie_id && (
+                                    <p className="mt-1 text-xs text-red-600">{errors.vetement_sous_categorie_id}</p>
+                                )}
+                            </div>
+
+                            {/* Image */}
+                            <div>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">Image</label>
+
+                                {!previewImage ? (
+                                    <div className="border border-gray-200 border-dashed rounded-md p-6 text-center">
+                                        <input
+                                            type="file"
+                                            accept="image/*"
+                                            onChange={handleFileChange}
+                                            className="hidden"
+                                            id="image-upload"
+                                        />
+                                        <label htmlFor="image-upload" className="cursor-pointer">
+                                            <div className="w-12 h-12 bg-gray-50 rounded-md flex items-center justify-center mx-auto mb-3">
+                                                <Upload className="w-5 h-5 text-gray-400" />
+                                            </div>
+                                            <p className="text-sm text-gray-600 mb-1">Cliquer pour ajouter</p>
+                                            <p className="text-xs text-gray-400">PNG, JPG jusqu'à 5MB</p>
+                                        </label>
+                                    </div>
+                                ) : (
+                                    <div className="relative">
+                                        <img
+                                            src={previewImage.preview}
+                                            alt="Preview"
+                                            className="w-full h-32 object-cover rounded-md border border-gray-200"
+                                        />
+                                        <button
+                                            onClick={removeImage}
+                                            type="button"
+                                            className="absolute top-2 right-2 w-6 h-6 bg-white border border-gray-200 rounded-md flex items-center justify-center text-gray-400 hover:text-gray-600 hover:bg-gray-50"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                )}
+
+                                {errors.image && (
+                                    <p className="mt-1 text-xs text-red-600">{errors.image}</p>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="flex justify-end gap-2 border-t pt-4">
-                        <button type="button" onClick={onFermer} className="px-4 py-2 rounded border">
-                            Annuler
-                        </button>
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="px-4 py-2 rounded bg-black text-white hover:bg-gray-800 flex items-center gap-2"
-                        >
-                            {loading && <Loader2 className="animate-spin w-4 h-4" />}
-                            Ajouter
-                        </button>
+                    {/* Footer */}
+                    <div className="border-t border-gray-100 px-6 py-4">
+                        <div className="flex gap-3">
+                            <button
+                                type="button"
+                                onClick={onFermer}
+                                className="flex-1 px-4 py-2 border border-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-50 transition-colors"
+                            >
+                                Annuler
+                            </button>
+                            <button
+                                type="submit"
+                                disabled={loading}
+                                className="flex-1 px-4 py-2 bg-orange-500 text-white text-sm font-medium rounded-md hover:bg-orange-600 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 transition-colors"
+                            >
+                                {loading ? (
+                                    <>
+                                        <Loader2 className="animate-spin w-4 h-4" />
+                                        Création...
+                                    </>
+                                ) : (
+                                    'Ajouter'
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </form>
             </div>

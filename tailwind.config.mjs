@@ -1,13 +1,16 @@
-/** @type {import('tailwindcss').Config} */
+// tailwind.config.js
 import animate from 'tailwindcss-animate'
 
 export default {
   darkMode: ['class'],
   content: [
-    './src/**/*.{js,jsx}', // Inclut les fichiers JSX
+    './src/**/*.{js,jsx}',
   ],
   theme: {
     extend: {
+      fontFamily: {
+        cormorant: ['"Cormorant Garamond"', 'serif'], // ✅ ajout ici
+      },
       borderRadius: {
         lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
