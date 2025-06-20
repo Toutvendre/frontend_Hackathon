@@ -24,7 +24,7 @@ const Intro = () => {
     useEffect(() => {
         if (!isLoading) {
             const delayRedirect = setTimeout(() => {
-                navigate('/categorie')
+                navigate('/accueil')
             }, 1000)
             return () => clearTimeout(delayRedirect)
         }

@@ -23,16 +23,18 @@ export const AuthProvider = ({ children }) => {
 
             try {
                 setError(null);
-                // IMPORTANT : modifie ici pour appeler l'endpoint qui retourne la compagnie connectée
+                // Utiliser une route protégée pour vérifier le token
                 const response = await api.get('/utilisateur-connecte');
-                setCompagnie(response.data);
+                setCompagnie(response.data.compagnie || response.data);
             } catch (error) {
                 console.error('Erreur lors de la vérification du token:', error);
                 if (error.response?.status === 401 || error.response?.status === 403) {
                     setCompagnie(null);
                     setToken(null);
+                    if (typeof window !== 'undefined') {
+                        localStorage.removeItem('auth_token');
+                    }
                     setError('Session expirée. Veuillez vous reconnecter.');
-                    localStorage.removeItem('auth_token');
                 } else {
                     setError('Erreur lors du chargement des données.');
                 }
@@ -44,18 +46,21 @@ export const AuthProvider = ({ children }) => {
     }, [token]);
 
     // Fonction de connexion
-    const login = async (CMPID, motDePasse) => {
+    const login = async (cmpid, motDePasse) => {
         try {
             setLoading(true);
             setError(null);
             const response = await api.post('/login', {
-                CMPID,
+                CMPID: cmpid,
                 mot_de_passe: motDePasse,
             });
-            const { token, compagnie } = response.data;
-            localStorage.setItem('auth_token', token);
-            setToken(token);
-            setCompagnie(compagnie);
+            const { token: newToken, compagnie: newCompagnie } = response.data;
+
+            if (typeof window !== 'undefined') {
+                localStorage.setItem('auth_token', newToken);
+            }
+            setToken(newToken);
+            setCompagnie(newCompagnie);
             return response.data;
         } catch (error) {
             console.error('Erreur lors de la connexion:', error);
@@ -74,6 +79,7 @@ export const AuthProvider = ({ children }) => {
     const logout = async () => {
         try {
             if (token) {
+                // Appeler une route de déconnexion si disponible
                 await api.post('/logout').catch(() => { });
             }
         } catch (error) {
@@ -139,7 +145,7 @@ export const AuthProvider = ({ children }) => {
         try {
             setError(null);
             const response = await api.get('/utilisateur-connecte');
-            setCompagnie(response.data);
+            setCompagnie(response.data.compagnie || response.data);
             return response.data;
         } catch (error) {
             console.error('Erreur lors du rafraîchissement:', error);
@@ -155,7 +161,7 @@ export const AuthProvider = ({ children }) => {
         return !!(token && compagnie);
     };
 
-    // Vérifier les rôles (pas utilisé pour l'instant)
+    // Vérifier les rôles (non utilisé pour l'instant, mais inclus pour compatibilité)
     const hasRole = (role) => {
         return compagnie?.roles?.includes(role) || false;
     };
@@ -176,26 +182,27 @@ export const AuthProvider = ({ children }) => {
         setError(null);
     };
 
+    // Contexte
+    const contextValue = {
+        compagnie,
+        token,
+        loading,
+        error,
+        login,
+        logout,
+        register,
+        updateProfile,
+        refreshCompany,
+        isAuthenticated,
+        hasRole,
+        hasAnyRole,
+        clearError,
+        setLoading,
+        setCompagnie,
+    };
+
     return (
-        <AuthContext.Provider
-            value={{
-                compagnie,
-                token,
-                loading,
-                error,
-                login,
-                logout,
-                register,
-                updateProfile,
-                refreshCompany,
-                isAuthenticated,
-                hasRole,
-                hasAnyRole,
-                clearError,
-                setLoading,
-                setCompagnie,
-            }}
-        >
+        <AuthContext.Provider value={contextValue}>
             {children}
         </AuthContext.Provider>
     );
